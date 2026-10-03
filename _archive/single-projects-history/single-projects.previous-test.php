@@ -1,0 +1,414 @@
+<?php get_header(); ?>
+
+<?php if ( true ) : // approved master template now applied to all projects ?>
+
+<?php
+$top_title = get_field('top_title');
+$location = get_field('location');
+$client = get_field('client');
+$type = get_field('type');
+$year = get_field('year');
+$architect = get_field('architect');
+$brand = get_field('brand');
+$project_content = get_field('project_content');
+$gallery = get_field('gallery');
+$gallery = is_array($gallery) ? $gallery : array();
+
+$content_no_headings = preg_replace('/<h[1-6][^>]*>.*?<\/h[1-6]>/is', ' ', (string) $project_content);
+$plain = wp_strip_all_tags( $content_no_headings );
+$plain = preg_replace('/\\s+/', ' ', trim($plain));
+$sentences = preg_split('/(?<=[.!?])\\s+/', $plain, -1, PREG_SPLIT_NO_EMPTY);
+$hero_sub = isset($sentences[0]) ? $sentences[0] : '';
+$intro_narrative = implode(' ', array_slice($sentences, 0, 3));
+$quote_text = isset($sentences[1]) ? $sentences[1] : $hero_sub;
+
+$hero_id = get_post_thumbnail_id( get_the_ID() );
+$hero_img = $hero_id ? get_the_post_thumbnail_url( get_the_ID(), 'full' ) : '';
+if ( empty( $hero_img ) && isset( $gallery[0]['url'] ) ) { $hero_img = $gallery[0]['url']; $hero_id = isset($gallery[0]['ID']) ? $gallery[0]['ID'] : 0; }
+$immersive_img = $hero_img;
+
+$excluded_ids = array();
+if ( $hero_id ) { $excluded_ids[] = $hero_id; }
+
+$intro_img = '';
+$intro_new_photo_id = 0;
+foreach ( $gallery as $img ) {
+    if ( ! empty( $img['url'] ) && strpos( $img['url'], 'stephi_lk_1753941559' ) !== false ) {
+        $intro_img = $img['url'];
+        $intro_new_photo_id = isset( $img['ID'] ) ? $img['ID'] : 0;
+        break;
+    }
+}
+if ( isset( $gallery[0]['ID'] ) && $gallery[0]['ID'] && ! in_array( $gallery[0]['ID'], $excluded_ids, true ) ) {
+    $excluded_ids[] = $gallery[0]['ID'];
+}
+if ( $intro_new_photo_id && ! in_array( $intro_new_photo_id, $excluded_ids, true ) ) {
+    $excluded_ids[] = $intro_new_photo_id;
+}
+if ( empty( $intro_img ) && isset( $gallery[0]['url'] ) ) { $intro_img = $gallery[0]['url']; }
+
+$grid_images = array();
+foreach ( $gallery as $img ) {
+    if ( empty( $img['url'] ) ) continue;
+    $img_id = isset( $img['ID'] ) ? $img['ID'] : 0;
+    if ( $img_id && in_array( $img_id, $excluded_ids, true ) ) continue;
+    $grid_images[] = $img;
+    if ( $img_id ) { $excluded_ids[] = $img_id; }
+    if ( count( $grid_images ) >= 4 ) break;
+}
+
+$brand_display = $brand ? str_replace(', ', ' · ', $brand) : '';
+?>
+
+<script>(function(){function sh_set_header_h(){var nav=document.querySelector('.sh2-site-header');var h=nav?Math.ceil(nav.getBoundingClientRect().bottom):174;document.documentElement.style.setProperty('--sh-header-h',h+'px');}sh_set_header_h();window.addEventListener('resize',sh_set_header_h);window.addEventListener('load',sh_set_header_h);})();
+</script>
+<style>
+.sh-proj2-hero{position:relative;box-sizing:border-box;height:82vh;min-height:640px;margin-top:var(--sh-header-h, 174px);overflow:hidden;color:#fff;display:flex;align-items:flex-end;}
+.sh-proj2-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.sh-proj2-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(62,89,73,.26) 0%,rgba(62,89,73,.20) 45%,rgba(62,89,73,.6) 100%);pointer-events:none;}
+.sh-proj2-hero-content{position:relative;z-index:2;width:100%;max-width:1320px;margin:0 auto;padding:0 40px 56px;}
+.sh-proj2-kicker{font-family:montserratbold,Montserrat,Arial,sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;color:#fff !important;text-shadow:0 1px 6px rgba(0,0,0,.45);}
+.sh-proj2-hero h1{font-family:Baskerville,"Baskerville Old Face","Times New Roman",serif;font-weight:400;font-size:clamp(32px,4.6vw,60px);line-height:1.1;margin:0 0 14px;max-width:760px;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.45);}
+.sh-proj2-hero-sub{font-family:diavlolight,Arial,sans-serif;font-size:15px;line-height:1.7;max-width:480px;margin:0;color:#fff !important;text-shadow:0 2px 10px rgba(0,0,0,.6);}
+.sh-proj2-scroll{margin-top:20px;font-family:montserratbold,Montserrat,sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#fff !important;opacity:.85;text-shadow:0 1px 6px rgba(0,0,0,.45);}
+.sh-proj2-facts{background:#f7f2ea;padding:40px 0;}
+.sh-proj2-facts-grid{max-width:1320px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.sh-proj2-fact{background:#fff;border-radius:18px;padding:24px 22px;text-align:center;}
+.sh-proj2-fact-icon{display:flex;align-items:center;justify-content:center;margin:0 auto 10px;height:28px;}
+.sh-proj2-fact-icon svg{width:26px;height:26px;}
+.sh-proj2-fact-label{font-family:montserratbold,Montserrat,sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bb8964 !important;margin-bottom:8px;}
+.sh-proj2-fact-value{font-family:Baskerville,"Baskerville Old Face",serif;font-size:17px;color:#3e5949;line-height:1.3;}
+.sh-proj2-intro{background:#fff;padding:72px 0;}
+.sh-proj2-intro-grid{max-width:1320px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:.95fr 1.15fr;gap:64px;align-items:center;}
+.sh-proj2-intro h2{font-family:Baskerville,"Baskerville Old Face",serif;font-weight:400;font-size:clamp(32px,3.8vw,48px);color:#3e5949;margin:0 0 20px;line-height:1.1;}
+.sh-proj2-intro-body{font-family:diavlolight,Arial,sans-serif;font-size:15px;line-height:1.85;color:#55715b !important;}
+.sh-proj2-intro-img{border-radius:20px;overflow:hidden;height:460px;}
+.sh-proj2-intro-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.sh-proj2-immersive{position:relative;min-height:540px;display:flex;align-items:center;overflow:hidden;color:#fff;}
+.sh-proj2-immersive img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.sh-proj2-immersive::after{content:"";position:absolute;inset:0;left:0;width:58%;background:#3e5949;opacity:.7;pointer-events:none;}
+.sh-proj2-quote{position:relative;z-index:2;max-width:1320px;margin:0 auto;padding:0 40px;width:100%;}
+.sh-proj2-quote-inner{max-width:420px;}
+.sh-proj2-quote-mark{font-family:Baskerville,serif;font-size:56px;color:#bb8964 !important;line-height:.6;margin-bottom:10px;}
+.sh-proj2-quote blockquote{font-family:Baskerville,"Baskerville Old Face",serif;font-size:27px;line-height:1.35;margin:0 0 22px;font-weight:400;color:#fff !important;}
+.sh-proj2-quote-rule{width:34px;height:2px;background:#bb8964;}
+.sh-proj2-gallery{background:#f7f2ea;padding:48px 40px 36px;}
+.sh-proj2-gallery-grid{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.sh-proj2-gallery-grid figure{margin:0;border-radius:18px;overflow:hidden;aspect-ratio:4/3;}
+.sh-proj2-gallery-grid img{width:100%;height:100%;object-fit:cover;display:block;}
+.sh-proj2-details{background:#fff;padding:56px 0 64px;}
+.sh-proj2-details-inner{max-width:1320px;margin:0 auto;padding:0 40px;}
+.sh-proj2-details h2{font-family:Baskerville,"Baskerville Old Face",serif;font-weight:400;font-size:34px;color:#3e5949;margin:0 0 12px;}
+.sh-proj2-details-rule{width:34px;height:1px;background:#bb8964;margin-bottom:28px;}
+.sh-proj2-details-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:stretch;}
+.sh-proj2-detail{background:#f7f2ea;border-radius:16px;padding:22px 22px;display:flex;flex-direction:column;}
+.sh-proj2-detail-icon{margin-bottom:14px;height:26px;}
+.sh-proj2-detail-icon svg{width:24px;height:24px;}
+.sh-proj2-detail-label{font-family:montserratbold,Montserrat,sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#bb8964 !important;margin-bottom:8px;}
+.sh-proj2-detail p{font-family:diavlolight,Arial,sans-serif;font-size:14px;line-height:1.55;color:#3e5949 !important;margin:0;}
+@media(max-width:1000px){
+.sh-proj2-facts-grid,.sh-proj2-details-grid{grid-template-columns:repeat(2,1fr);}
+.sh-proj2-gallery-grid{grid-template-columns:repeat(2,1fr);}
+.sh-proj2-intro-grid{grid-template-columns:1fr;gap:32px;}
+.sh-proj2-intro-img{height:340px;order:-1;}
+}
+@media(max-width:760px){
+.sh-proj2-hero{height:auto;min-height:560px;margin-top:var(--sh-header-h, 150px);padding-bottom:40px;}
+.sh-proj2-immersive::after{width:82%;}
+.sh-proj2-quote blockquote{font-size:21px;}
+.sh-proj2-facts-grid,.sh-proj2-details-grid,.sh-proj2-gallery-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+.sh-proj2-hero-content,.sh-proj2-facts-grid,.sh-proj2-intro-grid,.sh-proj2-quote,.sh-proj2-gallery-grid,.sh-proj2-details-inner{padding-left:20px;padding-right:20px;}
+}
+.sh-project-cta > div{width:min(100%,820px);margin:0 auto;text-align:center;}
+.sh-project-cta .sh-project-cta-actions{width:100%;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:22px;}
+.sh-project-cta > div > span{color:#bb8964 !important;}
+</style>
+
+<section class="sh-proj2-hero">
+  <?php if ($hero_img): ?><img src="<?php echo esc_url($hero_img); ?>" alt="<?php echo esc_attr($top_title); ?>"><?php endif; ?>
+  <div class="sh-proj2-hero-content">
+    <?php if ($client): ?><div class="sh-proj2-kicker"><?php echo esc_html($client); ?></div><?php endif; ?>
+    <h1><?php echo esc_html($top_title); ?></h1>
+    <?php if ($hero_sub): ?><p class="sh-proj2-hero-sub"><?php echo esc_html($hero_sub); ?></p><?php endif; ?>
+    <div class="sh-proj2-scroll">Scroll</div>
+  </div>
+</section>
+
+<section class="sh-proj2-facts">
+  <div class="sh-proj2-facts-grid">
+    <?php if ($location): ?><div class="sh-proj2-fact"><div class="sh-proj2-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="sh-proj2-fact-label">Location</div><div class="sh-proj2-fact-value"><?php echo esc_html($location); ?></div></div><?php endif; ?>
+    <?php if ($year): ?><div class="sh-proj2-fact"><div class="sh-proj2-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="sh-proj2-fact-label">Completed</div><div class="sh-proj2-fact-value"><?php echo esc_html($year); ?></div></div><?php endif; ?>
+    <?php if ($type): ?><div class="sh-proj2-fact"><div class="sh-proj2-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v18"/><path d="M15 22V9a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13"/><line x1="9" y1="8" x2="9" y2="8"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="9" y1="16" x2="9" y2="16"/></svg></div><div class="sh-proj2-fact-label">Type</div><div class="sh-proj2-fact-value"><?php echo esc_html($type); ?></div></div><?php endif; ?>
+    <?php if ($client): ?><div class="sh-proj2-fact"><div class="sh-proj2-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><div class="sh-proj2-fact-label">Client</div><div class="sh-proj2-fact-value"><?php echo esc_html($client); ?></div></div><?php endif; ?>
+  </div>
+</section>
+
+<section class="sh-proj2-intro">
+  <div class="sh-proj2-intro-grid">
+    <div>
+      <h2><?php echo esc_html($top_title); ?></h2>
+      <div class="sh-proj2-intro-body"><p><?php echo esc_html($intro_narrative); ?></p></div>
+    </div>
+    <?php if ($intro_img): ?><div class="sh-proj2-intro-img"><img src="<?php echo esc_url($intro_img); ?>" alt="<?php echo esc_attr($top_title); ?>"></div><?php endif; ?>
+  </div>
+</section>
+
+<?php if ($immersive_img): ?>
+<section class="sh-proj2-immersive">
+  <img src="<?php echo esc_url($immersive_img); ?>" alt="<?php echo esc_attr($top_title); ?>">
+  <div class="sh-proj2-quote">
+    <div class="sh-proj2-quote-inner">
+      <div class="sh-proj2-quote-mark">&#8220;</div>
+      <?php if ($quote_text): ?><blockquote><?php echo esc_html($quote_text); ?></blockquote><?php endif; ?>
+      <div class="sh-proj2-quote-rule"></div>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if (!empty($grid_images)): ?>
+<section class="sh-proj2-gallery">
+  <div class="sh-proj2-gallery-grid sh-lightbox-gallery">
+    <?php foreach ($grid_images as $img): if (empty($img['url'])) continue; ?>
+    <figure>
+      <button type="button" class="sh-lightbox-trigger" data-lightbox-src="<?php echo esc_url($img['url']); ?>" data-lightbox-caption="<?php echo esc_attr( !empty($img['alt']) ? $img['alt'] : $top_title ); ?>" aria-label="View larger image">
+        <img src="<?php echo esc_url($img['url']); ?>" alt="<?php echo esc_attr( !empty($img['alt']) ? $img['alt'] : $top_title ); ?>" loading="lazy">
+      </button>
+    </figure>
+    <?php endforeach; ?>
+  </div>
+</section>
+
+<div class="sh-lightbox" id="shLightbox" aria-hidden="true">
+  <button type="button" class="sh-lightbox-close" aria-label="Close">&times;</button>
+  <button type="button" class="sh-lightbox-prev" aria-label="Previous image">&#8249;</button>
+  <div class="sh-lightbox-stage">
+    <img src="" alt="" id="shLightboxImg">
+    <div class="sh-lightbox-counter" id="shLightboxCounter"></div>
+  </div>
+  <button type="button" class="sh-lightbox-next" aria-label="Next image">&#8250;</button>
+</div>
+
+<style>
+.sh-lightbox-gallery figure{margin:0;}
+.sh-lightbox-trigger{display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:pointer;}
+.sh-lightbox-trigger img{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .2s ease;}
+.sh-lightbox-trigger:hover img{opacity:.88;}
+.sh-lightbox{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(20,28,22,.94);}
+.sh-lightbox.is-open{display:flex;}
+.sh-lightbox-stage{position:relative;max-width:min(1200px,92vw);max-height:86vh;display:flex;flex-direction:column;align-items:center;}
+.sh-lightbox-stage img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.45);}
+.sh-lightbox-counter{margin-top:14px;color:#f4efe6;font-family:Montserrat,Arial,sans-serif;font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.8;}
+.sh-lightbox-close,.sh-lightbox-prev,.sh-lightbox-next{position:absolute;background:rgba(247,242,234,.1);border:1px solid rgba(247,242,234,.5);color:#f7f2ea;width:46px;height:46px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:26px;line-height:1;cursor:pointer;transition:background .2s ease,transform .2s ease;}
+.sh-lightbox-close:hover,.sh-lightbox-prev:hover,.sh-lightbox-next:hover{background:#bb8964;border-color:#bb8964;}
+.sh-lightbox-close{top:24px;right:24px;}
+.sh-lightbox-prev{left:24px;top:50%;transform:translateY(-50%);}
+.sh-lightbox-next{right:24px;top:50%;transform:translateY(-50%);}
+@media(max-width:640px){
+  .sh-lightbox-prev{left:10px;width:38px;height:38px;font-size:20px;}
+  .sh-lightbox-next{right:10px;width:38px;height:38px;font-size:20px;}
+  .sh-lightbox-close{top:14px;right:14px;width:38px;height:38px;font-size:20px;}
+}
+</style>
+
+<script>
+(function(){
+  var triggers = Array.prototype.slice.call(document.querySelectorAll('.sh-lightbox-trigger'));
+  if (!triggers.length) return;
+  var items = triggers.map(function(t){
+    return { src: t.getAttribute('data-lightbox-src'), caption: t.getAttribute('data-lightbox-caption') || '' };
+  });
+  var box = document.getElementById('shLightbox');
+  var img = document.getElementById('shLightboxImg');
+  var counter = document.getElementById('shLightboxCounter');
+  var current = 0;
+  function show(i){
+    current = (i + items.length) % items.length;
+    img.src = items[current].src;
+    img.alt = items[current].caption;
+    counter.textContent = (current + 1) + ' / ' + items.length;
+  }
+  function open(i){
+    show(i);
+    box.classList.add('is-open');
+    box.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  }
+  function close(){
+    box.classList.remove('is-open');
+    box.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+  }
+  triggers.forEach(function(t, i){
+    t.addEventListener('click', function(){ open(i); });
+  });
+  box.querySelector('.sh-lightbox-close').addEventListener('click', close);
+  box.querySelector('.sh-lightbox-prev').addEventListener('click', function(){ show(current - 1); });
+  box.querySelector('.sh-lightbox-next').addEventListener('click', function(){ show(current + 1); });
+  box.addEventListener('click', function(e){ if (e.target === box) close(); });
+  document.addEventListener('keydown', function(e){
+    if (!box.classList.contains('is-open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
+  });
+})();
+</script>
+<?php endif; ?>
+
+<section class="sh-proj2-details">
+  <div class="sh-proj2-details-inner">
+    <h2>Project Details</h2>
+    <div class="sh-proj2-details-rule"></div>
+    <div class="sh-proj2-details-grid">
+      <?php if ($architect): ?><div class="sh-proj2-detail"><div class="sh-proj2-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div><div class="sh-proj2-detail-label">Architecture</div><p><?php echo esc_html($architect); ?></p></div><?php endif; ?>
+      <?php if ($brand_display): ?><div class="sh-proj2-detail"><div class="sh-proj2-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><div class="sh-proj2-detail-label">Specified Brands</div><p><?php echo esc_html($brand_display); ?></p></div><?php endif; ?>
+      <?php if ($type): ?><div class="sh-proj2-detail"><div class="sh-proj2-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v18"/><path d="M15 22V9a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13"/><line x1="9" y1="8" x2="9" y2="8"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="9" y1="16" x2="9" y2="16"/></svg></div><div class="sh-proj2-detail-label">Project Type</div><p><?php echo esc_html($type); ?></p></div><?php endif; ?>
+      <?php if ($year): ?><div class="sh-proj2-detail"><div class="sh-proj2-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#55715b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="sh-proj2-detail-label">Completed</div><p><?php echo esc_html($year); ?></p></div><?php endif; ?>
+    </div>
+  </div>
+</section>
+
+<section class="sh-project-cta">
+  <div>
+    <span>Planning a Similar Project?</span>
+    <h2>Creating Value Through<br>Inspired Hospitality</h2>
+    <p>Share your brief, BOQ or drawings with our specialists, or arrange a guided showroom visit to explore suitable finishes and solutions.</p>
+    <div class="sh-project-cta-actions">
+      <a href="https://sanctuaryholdings.lk/request-a-quotation/">Request a Quotation</a>
+    </div>
+  </div>
+</section>
+
+<?php else : ?>
+
+           <!-- Slider -->
+            <div class="main-banner">
+                 <img class="img-fluid intro-image" src="<?php the_field( 'top_banner' ); ?>" alt="<?php echo esc_attr( get_the_title() . ' project overview' ); ?>">
+                <!--<div class="page-title">-->
+                    <!--<h2><?php the_title(); ?></h2>-->
+                <!--</div>-->
+            </div>
+
+            <!-- Partner intro -->
+            <div class="project-intro-wrapper">
+                <div class="row container text-left">
+                    <div class="col-md-1"></div>
+                    <div class="col-xs-12 col-md-10">
+                        <div class="project-intro">
+                            <div class="title-header center-align center-align-mobile green-header">
+                                <h3><?php the_field( 'top_title' ); ?></h3>
+                                <!--<p>Since <?php the_field( 'year' ); ?></p>-->
+                                <span class="long-line"></span>
+                                <span class="short-line"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-1"></div>
+                </div>
+            </div>
+
+
+            
+
+
+
+            <!-- Partner Detail -->
+            <div class="project-detail-wrapper">
+                <div class="row container">
+                    <div class="col-xs-12 col-md-8">
+                        <div class="title-header project-title left-align green-header">
+                            <h4><?php the_field( 'project_title' ); ?></h4>
+                            <span class="long-line"></span>
+                            <span class="short-line"></span>
+                        </div>
+                        <div class="partner-detail">
+                           <?php the_field( 'project_content' ); ?>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-md-4 project-brief-box">
+                        <div class="title-header project-title left-align green-header">
+                            <h4>Project Brief</h4>
+                        </div>
+                        <div class="project-brief-detail">
+                            <ul>
+                                <li><span class="text">Location</span><span class="detail"><?php the_field( 'location' ); ?></span></li>
+                                <li><span class="text">Client</span><span class="detail"><?php the_field( 'client' ); ?></span></li>
+                                <li><span class="text">Type</span><span class="detail"><?php the_field( 'type' ); ?></span></li>
+                                <li><span class="text">Brand Used</span><span class="detail"><?php the_field( 'brand' ); ?></span></li>
+                                <li><span class="text">Units</span><span class="detail"><?php the_field( 'units' ); ?></span></li>
+                                <li><span class="text">Year</span><span class="detail"><?php the_field( 'year' ); ?></span></li>
+                                <li><span class="text">Architect/Designer</span><span class="detail"><?php the_field( 'architect' ); ?></span></li>
+                                
+                                
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- peoject slider -->
+            <div class="peoject-slider-wrapper">
+                <div class="row container">
+                    <div class="col-md-1"></div>
+                    <div class="col-xs-12 col-md-10">
+                        <div class="project-slider">
+                            <div class="carousel slide carousel-fade" data-ride="carousel" id="carouselExampleIndicators">
+
+                                <?php 
+                                    $images = get_field('gallery');
+                                    if( $images ): ?>
+                                <div class="carousel-inner">
+                                     
+                                        <?php 
+                                        $i = 1;
+                                            foreach( $images as $image ): 
+
+
+                                            if($i == 1){
+                                              $class="active";
+                                            }else{
+                                              $class = "";
+                                            }
+                                        ?>
+                                    <div class="carousel-item <?php echo $class;?>">
+                                        <img alt="<?php echo esc_attr( ! empty( $image['alt'] ) ? $image['alt'] : get_the_title() . ' project gallery image ' . $i ); ?>" class="d-block w-100" src="<?php echo esc_url($image['url']); ?>" />
+                                     </div>
+                                    
+                                    <?php $i++; endforeach; ?>
+                                </div>
+                                <?php endif; ?>
+                                <a class="carousel-control-prev" data-slide="prev" href="#carouselExampleIndicators" role="button">
+                                    <span aria-hidden="true" class="carousel-control-prev-icon">
+                                    </span>
+                                    <span class="sr-only">
+                                        Previous
+                                    </span>
+                                </a>
+                                <a class="carousel-control-next" data-slide="next" href="#carouselExampleIndicators" role="button">
+                                    <span aria-hidden="true" class="carousel-control-next-icon">
+                                    </span>
+                                    <span class="sr-only">
+                                        Next
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-1"></div>
+                </div>
+            </div>
+
+
+<section class="project-conversion-cta" aria-labelledby="project-next-step-title" style="background:#173b32;color:#fff;padding:52px 20px;margin-top:48px;text-align:center;">
+  <div class="container">
+    <h2 id="project-next-step-title" style="color:#fff;margin-bottom:14px;">Planning a similar project?</h2>
+    <p style="max-width:720px;margin:0 auto 26px;">Share your brief, BOQ or drawings with our specialists, or arrange a guided showroom visit to explore suitable finishes and solutions.</p>
+    <a href="<?php echo esc_url( home_url( '/request-a-quotation/' ) ); ?>" style="display:inline-block;background:#fff;color:#173b32;padding:13px 24px;margin:6px;text-decoration:none;font-weight:600;" aria-label="Request a quotation for a similar project">Request a Quotation</a>
+    <a href="<?php echo esc_url( home_url( '/book-a-showroom-visit/' ) ); ?>" style="display:inline-block;border:2px solid #fff;color:#fff;padding:11px 24px;margin:6px;text-decoration:none;font-weight:600;" aria-label="Book a Sanctuary Holdings showroom visit">Book a Showroom Visit</a>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php get_footer(); ?>
+

@@ -1,0 +1,961 @@
+<?php
+/*
+ Template Name: Bathware Completed
+*/
+
+get_header();
+
+$projects_query = new WP_Query(
+    array(
+        'post_type'      => 'projects',
+        'post_status'    => 'publish',
+        'orderby'        => 'menu_order',
+        'order'          => 'DESC',
+        'posts_per_page' => -1,
+    )
+);
+
+$category_labels = array(
+    'hotels'       => 'Hotels',
+    'residential'  => 'Residential',
+    'apartments'   => 'Apartments',
+    'government'   => 'Government',
+    'other'        => 'Other',
+);
+
+$projects = array();
+$projects_by_slug = array();
+$project_counts = array_fill_keys(array_keys($category_labels), 0);
+
+if ($projects_query->have_posts()) {
+    while ($projects_query->have_posts()) {
+        $projects_query->the_post();
+
+        $project_id   = get_the_ID();
+        $project_type = trim((string) get_field('type', $project_id));
+        $project_slug = get_post_field('post_name', $project_id);
+        $image_url    = get_the_post_thumbnail_url($project_id, 'full');
+
+        $normalized_type = 'other';
+        if (stripos($project_type, 'hotel') !== false) {
+            $normalized_type = 'hotels';
+        } elseif (stripos($project_type, 'resid') !== false) {
+            $normalized_type = 'residential';
+        } elseif (stripos($project_type, 'apart') !== false) {
+            $normalized_type = 'apartments';
+        } elseif (stripos($project_type, 'government') !== false) {
+            $normalized_type = 'government';
+        } elseif (stripos($project_type, 'other') !== false) {
+            $normalized_type = 'other';
+        }
+
+        $project = array(
+            'id'          => $project_id,
+            'title'       => get_the_title(),
+            'slug'        => $project_slug,
+            'url'         => get_permalink(),
+            'image'       => $image_url,
+            'alt'         => get_the_title() . ' project',
+            'type_raw'    => $project_type,
+            'type_key'    => $normalized_type,
+            'type_label'  => $category_labels[$normalized_type],
+            'excerpt'     => has_excerpt() ? get_the_excerpt() : '',
+        );
+
+        $projects[] = $project;
+        $projects_by_slug[$project_slug] = $project;
+        $project_counts[$normalized_type] += 1;
+    }
+    wp_reset_postdata();
+}
+
+$featured_project_slugs = array(
+    'inter-continental',
+    'cinnamon-bentota-beach',
+    'jetwing-wahawa-walauwa',
+    'radisson-blu-galle',
+    'iconic-galaxy',
+);
+
+$featured_projects = array();
+foreach ($featured_project_slugs as $featured_slug) {
+    if (isset($projects_by_slug[$featured_slug])) {
+        $featured_projects[] = $projects_by_slug[$featured_slug];
+    }
+}
+
+$hero_tiles = array();
+foreach (array('cinnamon-bentota-beach', 'jetwing-wahawa-walauwa', 'radisson-blu-galle', 'iconic-galaxy', 'inter-continental') as $hero_slug) {
+    if (isset($projects_by_slug[$hero_slug])) {
+        $hero_tiles[] = $projects_by_slug[$hero_slug];
+    }
+}
+foreach ($projects as $project) {
+    if (count($hero_tiles) >= 6) {
+        break;
+    }
+    $already_used = false;
+    foreach ($hero_tiles as $hero_tile) {
+        if ($hero_tile['slug'] === $project['slug']) {
+            $already_used = true;
+            break;
+        }
+    }
+    if (!$already_used) {
+        $hero_tiles[] = $project;
+    }
+}
+?>
+
+<style id="sh-project-page-style">
+    .sh-project-page {
+        --sh-green: #3f5949;
+        --sh-green-deep: #2f4438;
+        --sh-ink: #1d271f;
+        --sh-muted: #647269;
+        --sh-cream: #f7f2ea;
+        --sh-card: #ffffff;
+        --sh-line: rgba(63, 89, 73, 0.14);
+        --sh-shadow: 0 24px 60px rgba(36, 46, 38, 0.08);
+        --sh-radius-xl: 32px;
+        --sh-radius-lg: 24px;
+        --sh-radius-md: 18px;
+        color: var(--sh-ink);
+        background: #ffffff;
+        font-family: "Montserrat", sans-serif;
+        margin: 0 0 110px;
+    }
+
+    .sh-project-page * {
+        box-sizing: border-box;
+    }
+
+    .sh-project-shell {
+        width: min(1200px, calc(100% - 40px));
+        margin: 0 auto;
+    }
+
+    .sh-project-center-head {
+        width: min(760px, 100%);
+        margin: 0 auto 44px;
+        text-align: center;
+    }
+
+    .sh-project-eyebrow {
+        display: inline-block;
+        margin-bottom: 14px;
+        color: #bb8964;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+    }
+
+    .sh-project-center-head h2 {
+        margin: 0 0 16px;
+        color: var(--sh-green);
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(42px, 5vw, 72px);
+        line-height: 0.96;
+        font-weight: 500;
+        letter-spacing: -0.04em;
+    }
+
+    .sh-project-center-head p {
+        margin: 0 auto;
+        color: var(--sh-muted);
+        font-size: 16px;
+        line-height: 1.8;
+        max-width: 660px;
+    }
+
+    .sh-project-hero {
+        position: relative;
+        min-height: clamp(560px, 72vh, 820px);
+        margin: 0 0 96px;
+        overflow: hidden;
+        background: var(--sh-green-deep);
+        color: #fff;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+    }
+
+    .sh-project-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(90deg, rgba(15, 24, 18, 0.86) 0%, rgba(15, 24, 18, 0.72) 34%, rgba(15, 24, 18, 0.24) 100%),
+            radial-gradient(circle at 18% 26%, rgba(247, 242, 234, 0.16), transparent 28%);
+        z-index: 1;
+    }
+
+    .sh-project-hero-grid {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr 0.92fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 16px;
+        padding: 18px;
+    }
+
+    .sh-project-hero-tile {
+        position: relative;
+        overflow: hidden;
+        background: #d7d0c3;
+    }
+
+    .sh-project-hero-tile::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: var(--hero-image);
+        background-size: cover;
+        background-position: center;
+        transform: scale(1.02);
+        filter: saturate(0.92) contrast(0.96);
+    }
+
+    .sh-project-hero-tile::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.42));
+    }
+
+    .sh-project-hero-tile:nth-child(1) {
+        grid-row: 1 / 3;
+    }
+
+    .sh-project-hero-tile:nth-child(4) {
+        grid-column: 2 / 4;
+    }
+
+    .sh-project-hero-copy {
+        position: relative;
+        z-index: 2;
+        width: min(760px, calc(100% - 48px));
+        padding: clamp(118px, 16vw, 190px) 0 clamp(88px, 10vw, 132px);
+        margin-left: clamp(24px, 7vw, 94px);
+    }
+
+    .sh-project-hero-copy h1 {
+        margin: 0 0 24px;
+        color: #ffffff;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(58px, 8vw, 112px);
+        line-height: 0.9;
+        font-weight: 500;
+        letter-spacing: -0.05em;
+        max-width: 760px;
+    }
+
+    .sh-project-hero-copy p {
+        max-width: 620px;
+        margin: 0 0 34px;
+        color: rgba(255, 255, 255, 0.84);
+        font-size: clamp(15px, 1.4vw, 19px);
+        line-height: 1.85;
+    }
+
+    .sh-project-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .sh-project-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50px;
+        padding: 14px 24px;
+        border-radius: 999px;
+        text-decoration: none !important;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .sh-project-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .sh-project-btn--solid {
+        background: #ffffff;
+        color: var(--sh-green) !important;
+        border: 1px solid #ffffff;
+    }
+
+    .sh-project-btn--ghost {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.56);
+        backdrop-filter: blur(10px);
+    }
+
+    .sh-project-section {
+        margin-bottom: 96px;
+    }
+
+    .sh-project-type-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .sh-project-type-card {
+        appearance: none;
+        width: 100%;
+        border: 1px solid var(--sh-line);
+        border-radius: var(--sh-radius-lg);
+        background: var(--sh-card);
+        padding: 26px 22px;
+        text-align: left;
+        box-shadow: var(--sh-shadow);
+        cursor: pointer;
+        transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, background-color 0.28s ease;
+    }
+
+    .sh-project-type-card:hover,
+    .sh-project-type-card:focus-visible {
+        transform: translateY(-4px);
+        border-color: rgba(63, 89, 73, 0.42);
+        box-shadow: 0 18px 38px rgba(36, 46, 38, 0.10);
+        outline: none;
+    }
+
+    .sh-project-type-card.is-active {
+        background: var(--sh-green);
+        border-color: var(--sh-green);
+        box-shadow: 0 18px 42px rgba(63, 89, 73, 0.22);
+    }
+
+    .sh-project-type-card.is-active .sh-project-type-name,
+    .sh-project-type-card.is-active .sh-project-type-meta,
+    .sh-project-type-card.is-active .sh-project-type-count {
+        color: #ffffff;
+    }
+
+    .sh-project-type-name {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--sh-green);
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 34px;
+        line-height: 1;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+    }
+
+    .sh-project-type-meta {
+        display: block;
+        color: var(--sh-muted);
+        font-size: 13px;
+        line-height: 1.5;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .sh-project-type-count {
+        display: block;
+        margin-top: 20px;
+        color: var(--sh-green);
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .sh-project-featured-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .sh-project-featured-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 360px;
+        border-radius: var(--sh-radius-xl);
+        background: #ddd4c7;
+        box-shadow: var(--sh-shadow);
+        text-decoration: none !important;
+    }
+
+    .sh-project-featured-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: var(--featured-image);
+        background-size: cover;
+        background-position: center;
+        transform: scale(1.02);
+        transition: transform 0.8s ease;
+    }
+
+    .sh-project-featured-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(17, 25, 20, 0.03), rgba(17, 25, 20, 0.74));
+    }
+
+    .sh-project-featured-card:hover::before {
+        transform: scale(1.08);
+    }
+
+    .sh-project-featured-card:nth-child(1),
+    .sh-project-featured-card:nth-child(2) {
+        grid-column: span 6;
+    }
+
+    .sh-project-featured-card:nth-child(3),
+    .sh-project-featured-card:nth-child(4),
+    .sh-project-featured-card:nth-child(5) {
+        grid-column: span 4;
+        min-height: 320px;
+    }
+
+    .sh-project-featured-content {
+        position: absolute;
+        inset: auto 0 0;
+        z-index: 1;
+        padding: 28px;
+    }
+
+    .sh-project-featured-type {
+        display: inline-block;
+        margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+    }
+
+    .sh-project-featured-content h3 {
+        margin: 0 0 8px;
+        color: #ffffff;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(32px, 3vw, 48px);
+        line-height: 0.96;
+        font-weight: 500;
+        letter-spacing: -0.04em;
+    }
+
+    .sh-project-featured-content p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 14px;
+        line-height: 1.65;
+    }
+
+    .sh-project-gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 32px;
+    }
+
+    .sh-project-gallery-card {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid var(--sh-line);
+        border-radius: var(--sh-radius-lg);
+        box-shadow: var(--sh-shadow);
+        text-decoration: none !important;
+        transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+    }
+
+    .sh-project-gallery-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(63, 89, 73, 0.30);
+        box-shadow: 0 20px 40px rgba(36, 46, 38, 0.12);
+    }
+
+    .sh-project-gallery-card[hidden] {
+        display: none !important;
+    }
+
+    .sh-project-gallery-image {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1 / 0.78;
+        background: #ddd4c7;
+    }
+
+    .sh-project-gallery-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.8s ease;
+    }
+
+    .sh-project-gallery-card:hover .sh-project-gallery-image img {
+        transform: scale(1.06);
+    }
+
+    .sh-project-gallery-body {
+        padding: 24px 24px 26px;
+    }
+
+    .sh-project-gallery-type {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #bb8964;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+    }
+
+    .sh-project-gallery-body h3 {
+        margin: 0 0 10px;
+        color: var(--sh-green);
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 34px;
+        line-height: 0.98;
+        font-weight: 500;
+        letter-spacing: -0.04em;
+    }
+
+    .sh-project-gallery-link {
+        color: var(--sh-muted);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .sh-project-cta-shell {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+    }
+
+    .sh-project-cta {
+        --sh-global-cta-art: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDY1MCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4OTY0IiBzdHJva2Utd2lkdGg9IjEuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIwLjU1Ij4KICA8IS0tIE1pbmltYWxpc3QgQXJjaGl0ZWN0dXJhbCBQb3J0YWwgLyBHbGFzcyBGcmFtZSAoTGVmdCkgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAwLCAxMDApIj4KICAgIDxsaW5lIHgxPSI2MCIgeTE9IjUwIiB4Mj0iNjAiIHkyPSI0NTAiIHN0cm9rZS13aWR0aD0iMS4yIiAvPgogICAgPGxpbmUgeDE9IjYwIiB5MT0iNTAiIHgyPSI0MjAiIHkyPSI1MCIgc3Ryb2tlLXdpZHRoPSIxLjIiIC8+CiAgICA8bGluZSB4MT0iNDIwIiB5MT0iNTAiIHgyPSI0MjAiIHkyPSI0NTAiIHN0cm9rZS13aWR0aD0iMS4yIiAvPgogICAgPGxpbmUgeDE9IjYwIiB5MT0iNDUwIiB4Mj0iNDIwIiB5Mj0iNDUwIiBzdHJva2Utd2lkdGg9IjEuMiIgLz4KCiAgICA8IS0tIEZyZWVzdGFuZGluZyBUdWIgaW5zaWRlIGZyYW1lZCB2aWV3IC0tPgogICAgPGVsbGlwc2UgY3g9IjI0MCIgY3k9IjM0MCIgcng9IjExMCIgcnk9IjE2IiAvPgogICAgPHBhdGggZD0iTSAxMzAsMzQwIEMgMTM1LDM5NSAxNzUsNDE1IDI0MCw0MTUgQyAzMDUsNDE1IDM0NSwzOTUgMzUwLDM0MCIgLz4KCiAgICA8IS0tIFN1bmxpZ2h0IERpYWdvbmFscyAtLT4KICAgIDxsaW5lIHgxPSI0MjAiIHkxPSI1MCIgeDI9IjU2MCIgeTI9IjI4MCIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1kYXNoYXJyYXk9IjQgNiIgb3BhY2l0eT0iMC41IiAvPgogICAgPGxpbmUgeDE9IjQyMCIgeTE9IjQ1MCIgeDI9IjU2MCIgeTI9IjQ4MCIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1kYXNoYXJyYXk9IjQgNiIgb3BhY2l0eT0iMC41IiAvPgogIDwvZz4KCiAgPCEtLSBTZXJlbmUgUmVzb3J0IC8gTW91bnRhaW4gSG9yaXpvbiBMaW5lIChSaWdodCkgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTIwLCAyMDApIiBvcGFjaXR5PSIwLjYiPgogICAgPHBhdGggZD0iTSA1MCwzMjAgQyAxNTAsMjIwIDI4MCwyNjAgNDAwLDE2MCBDIDQ4MCwyMzAgNTYwLDIwMCA2MjAsMzIwIiBzdHJva2Utd2lkdGg9IjAuOSIgLz4KICAgIDxwYXRoIGQ9Ik0gMTIwLDMyMCBDIDIyMCwyNjAgMzIwLDI5MCA0MjAsMjIwIEMgNDkwLDI3MCA1NDAsMjYwIDU4MCwzMjAiIHN0cm9rZS13aWR0aD0iMC43IiBvcGFjaXR5PSIwLjUiIC8+CiAgICA8bGluZSB4MT0iMjAiIHkxPSIzMjAiIHgyPSI2NDAiIHkyPSIzMjAiIHN0cm9rZS13aWR0aD0iMSIgLz4KICAgIDxjaXJjbGUgY3g9IjQ4MCIgY3k9IjEzMCIgcj0iMzAiIHN0cm9rZS13aWR0aD0iMC44IiBzdHJva2UtZGFzaGFycmF5PSIzIDMiIG9wYWNpdHk9IjAuNCIgLz4KICA8L2c+Cjwvc3ZnPgo=");
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 34px;
+        align-items: center;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .sh-project-cta h2 {
+        margin: 0 0 16px;
+        color: var(--sh-green);
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(42px, 4.8vw, 74px);
+        line-height: 0.94;
+        font-weight: 500;
+        letter-spacing: -0.05em;
+    }
+
+    .sh-project-cta p {
+        margin: 0;
+        color: var(--sh-muted);
+        font-size: 16px;
+        line-height: 1.8;
+        max-width: 520px;
+    }
+
+    .sh-project-cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: flex-start;
+    }
+
+    .sh-project-cta-actions .sh-project-btn--solid {
+        background: var(--sh-green);
+        color: #ffffff !important;
+        border-color: var(--sh-green);
+    }
+
+    .sh-project-cta-actions .sh-project-btn--solid:hover {
+        background: var(--sh-green-deep);
+        border-color: var(--sh-green-deep);
+    }
+
+    .sh-project-cta-actions .sh-project-btn--ghost {
+        background: transparent;
+        color: var(--sh-green) !important;
+        border-color: rgba(63, 89, 73, 0.38);
+    }
+
+    @media (max-width: 1199px) {
+        .sh-project-type-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .sh-project-gallery-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 991px) {
+        .sh-project-hero-grid {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .sh-project-hero-tile:nth-child(1),
+        .sh-project-hero-tile:nth-child(4) {
+            grid-column: auto;
+            grid-row: auto;
+        }
+
+        .sh-project-hero-copy {
+            width: calc(100% - 44px);
+            margin-left: 22px;
+            padding-top: 154px;
+        }
+
+        .sh-project-featured-card:nth-child(n) {
+            grid-column: span 6;
+            min-height: 340px;
+        }
+
+        .sh-project-cta {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .sh-project-page {
+            margin-bottom: 74px;
+        }
+
+        .sh-project-shell {
+            width: calc(100% - 28px);
+        }
+
+        .sh-project-section {
+            margin-bottom: 72px;
+        }
+
+        .sh-project-hero {
+            min-height: 640px;
+            margin-bottom: 74px;
+        }
+
+        .sh-project-hero-copy h1 {
+            font-size: 58px;
+        }
+
+        .sh-project-type-grid,
+        .sh-project-gallery-grid,
+        .sh-project-featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sh-project-featured-card:nth-child(n) {
+            grid-column: auto;
+            min-height: 320px;
+        }
+
+        .sh-project-type-card {
+            padding: 22px 20px;
+        }
+    }
+</style>
+<style id="sh-project-hero-collage-v1">
+.sh-project-page .sh-project-hero{
+    position:relative;
+    min-height:clamp(800px,88vh,860px);
+    margin:0 0 96px;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    overflow:hidden;
+    background:#fff!important;
+    color:#3f5949;
+}
+.sh-project-page .sh-project-hero::before{content:none!important;display:none!important}
+.sh-project-hero-panel{
+    position:absolute;
+    left:0;
+    top:clamp(205px,23vh,225px);
+    bottom:clamp(52px,7vh,76px);
+    width:43%;
+    display:flex;
+    align-items:center;
+    background:#f7f2ea;
+    z-index:2;
+}
+.sh-project-page .sh-project-hero-copy{
+    width:100%;
+    max-width:none;
+    box-sizing:border-box;
+    margin:0!important;
+    padding:0 clamp(38px,6.8vw,98px)!important;
+}
+.sh-project-page .sh-project-hero-copy .sh-project-eyebrow{
+    display:block;
+    margin:0 0 18px;
+    color:#a45f48;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+}
+.sh-project-page .sh-project-hero-copy h1{
+    max-width:430px;
+    margin:0 0 22px;
+    color:#3f5949;
+    font-family:"Italiana","Cormorant Garamond",Georgia,serif;
+    font-size:clamp(54px,5.15vw,76px);
+    font-weight:400;
+    letter-spacing:-.035em;
+    line-height:.98;
+}
+.sh-project-page .sh-project-hero-copy p{
+    max-width:390px;
+    margin:0 0 30px;
+    color:#59635d;
+    font-size:clamp(15px,1.1vw,17px);
+    line-height:1.65;
+}
+.sh-project-page .sh-project-hero-actions{display:flex;gap:0}
+.sh-project-page .sh-project-hero .sh-project-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:50px!important;
+    height:auto!important;
+    padding:15px 27px!important;
+    border-radius:999px!important;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.16em;
+}
+.sh-project-page .sh-project-hero .sh-project-btn--solid{
+    border:1px solid #3f5949;
+    background:#3f5949;
+    color:#fff!important;
+}
+.sh-project-page .sh-project-hero .sh-project-btn--solid:hover,
+.sh-project-page .sh-project-hero .sh-project-btn--solid:focus-visible{
+    background:#55715b;
+    border-color:#55715b;
+    color:#fff!important;
+    outline:2px solid rgba(63,89,73,.36);
+    outline-offset:3px;
+}
+.sh-project-hero-collage{
+    position:absolute;
+    right:clamp(22px,4.4vw,72px);
+    top:clamp(188px,21vh,205px);
+    bottom:clamp(34px,5vh,58px);
+    width:min(59vw,860px);
+    z-index:3;
+}
+.sh-project-hero-photo{
+    position:absolute;
+    margin:0;
+    overflow:hidden;
+    border-radius:var(--sh-radius-lg);
+    background:#eee8df;
+    box-shadow:0 18px 42px rgba(40,47,42,.13);
+}
+.sh-project-hero-photo img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+}
+.sh-project-hero-photo--one{left:0;top:17%;width:39%;height:60%;z-index:3}
+.sh-project-hero-photo--one img{object-position:52% 50%}
+.sh-project-hero-photo--two{right:0;top:0;width:66%;height:64%;z-index:1}
+.sh-project-hero-photo--two img{object-position:center 48%}
+.sh-project-hero-photo--three{right:7%;bottom:0;width:49%;height:47%;z-index:4}
+.sh-project-hero-photo--three img{object-position:center 52%}
+@media (max-width:1100px) and (min-width:768px){
+    .sh-project-hero-panel{width:46%}
+    .sh-project-page .sh-project-hero-copy{padding-left:42px!important;padding-right:58px!important}
+    .sh-project-page .sh-project-hero-copy h1{font-size:58px}
+    .sh-project-hero-collage{right:24px;width:58vw}
+}
+@media (max-width:767px){
+    .sh-project-page .sh-project-hero{min-height:0;margin-bottom:72px;padding-top:154px;overflow:hidden}
+    .sh-project-hero-panel{position:relative;left:auto;top:auto;bottom:auto;width:calc(100% - 28px);margin:0 14px;display:block}
+    .sh-project-page .sh-project-hero-copy{width:auto;margin:0!important;padding:48px 24px 52px!important}
+    .sh-project-page .sh-project-hero-copy .sh-project-eyebrow{margin-bottom:15px;font-size:10px}
+    .sh-project-page .sh-project-hero-copy h1{max-width:330px;margin-bottom:18px;font-size:48px;line-height:.98}
+    .sh-project-page .sh-project-hero-copy p{max-width:325px;margin-bottom:26px;font-size:15px;line-height:1.55}
+    .sh-project-page .sh-project-hero .sh-project-btn{min-height:48px;padding:14px 22px}
+    .sh-project-hero-collage{position:relative;right:auto;top:auto;bottom:auto;width:100%;height:440px;margin-top:16px}
+    .sh-project-hero-photo{box-shadow:0 12px 28px rgba(40,47,42,.12)}
+    .sh-project-hero-photo--one{left:4%;top:27%;width:46%;height:47%}
+    .sh-project-hero-photo--two{right:0;top:0;width:73%;height:57%}
+    .sh-project-hero-photo--three{right:7%;bottom:0;width:61%;height:49%}
+}
+@media (max-width:420px){
+    .sh-project-hero-collage{height:410px}
+    .sh-project-page .sh-project-hero-copy h1{font-size:44px}
+}
+</style>
+
+
+<main class="sh-project-page">
+    <section class="sh-project-hero" aria-labelledby="sh-project-hero-title">
+        <div class="sh-project-hero-panel">
+            <div class="sh-project-hero-copy">
+                <span class="sh-project-eyebrow">Projects</span>
+                <h1 id="sh-project-hero-title">Spaces We’ve Helped Shape</h1>
+                <p>Explore selected work from Sanctuary’s live project portfolio.</p>
+                <div class="sh-project-hero-actions">
+                    <a class="sh-project-btn sh-project-btn--solid" href="#project-gallery">Explore Gallery</a>
+                </div>
+            </div>
+        </div>
+        <div class="sh-project-hero-collage" aria-label="Selected Sanctuary project interiors">
+            <figure class="sh-project-hero-photo sh-project-hero-photo--one">
+                <img src="<?php echo esc_url(home_url('/wp-content/uploads/2026/07/sanctuary-projects-collage-bathroom-01.png')); ?>" alt="Classic bathroom project interior with twin vanity and freestanding bath" loading="eager" decoding="async">
+            </figure>
+            <figure class="sh-project-hero-photo sh-project-hero-photo--two">
+                <img src="<?php echo esc_url(home_url('/wp-content/uploads/2026/07/sanctuary-projects-collage-bathroom-02.png')); ?>" alt="Ocean-facing bathroom project interior with freestanding bath" loading="eager" fetchpriority="high" decoding="async">
+            </figure>
+            <figure class="sh-project-hero-photo sh-project-hero-photo--three">
+                <img src="<?php echo esc_url(home_url('/wp-content/uploads/2026/07/sanctuary-projects-collage-bathroom-03.png')); ?>" alt="Warm contemporary bathroom project interior with timber details" loading="eager" decoding="async">
+            </figure>
+        </div>
+    </section>
+
+    <section class="sh-project-section sh-project-shell" aria-labelledby="project-type-heading">
+        <div class="sh-project-center-head">
+            <span class="sh-project-eyebrow">Project Types</span>
+            <h2 id="project-type-heading">Projects across every kind of brief.</h2>
+            <p>Browse Sanctuary projects by type. Selecting a card below will take you straight to the gallery and filter only the project listings in that section.</p>
+        </div>
+        <div class="sh-project-type-grid" data-project-filter-cards>
+            <?php foreach ($category_labels as $category_key => $category_label) : if ($category_key === 'other') continue; ?>
+                <button
+                    class="sh-project-type-card<?php echo $category_key === 'hotels' ? ' is-active' : ''; ?>"
+                    type="button"
+                    data-filter-card="<?php echo esc_attr($category_key); ?>"
+                    aria-pressed="<?php echo $category_key === 'hotels' ? 'true' : 'false'; ?>"
+                >
+                    <span class="sh-project-type-name"><?php echo esc_html($category_label); ?></span>
+                    <span class="sh-project-type-meta">Project category</span>
+                    <span class="sh-project-type-count"><?php echo esc_html($project_counts[$category_key]); ?> projects</span>
+                </button>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="sh-project-section sh-project-shell" aria-labelledby="featured-projects-heading">
+        <div class="sh-project-center-head">
+            <span class="sh-project-eyebrow">Featured Projects</span>
+            <h2 id="featured-projects-heading">Selected projects worth a closer look.</h2>
+            <p>A focused selection from the current Sanctuary project portfolio, highlighting hospitality and apartment projects already featured on the live site.</p>
+        </div>
+        <div class="sh-project-featured-grid">
+            <?php foreach ($featured_projects as $featured_project) : ?>
+                <a
+                    class="sh-project-featured-card"
+                    href="<?php echo esc_url($featured_project['url']); ?>"
+                    style="--featured-image:url('<?php echo esc_url($featured_project['image']); ?>');"
+                >
+                    <div class="sh-project-featured-content">
+                        <span class="sh-project-featured-type"><?php echo esc_html($featured_project['type_label']); ?></span>
+                        <h3><?php echo esc_html($featured_project['title']); ?></h3>
+                        <p>View project details</p>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="sh-project-section sh-project-shell" id="project-gallery" aria-labelledby="project-gallery-heading">
+        <div class="sh-project-center-head">
+            <span class="sh-project-eyebrow">Project Gallery</span>
+            <h2 id="project-gallery-heading">The full live project portfolio.</h2>
+            <p>Every project currently listed on Sanctuary’s website remains here. Use the project type cards above to filter this gallery without changing the featured project section.</p>
+        </div>
+        <div class="sh-project-gallery-grid" data-project-gallery>
+            <?php foreach ($projects as $project) : ?>
+                <a
+                    class="sh-project-gallery-card"
+                    href="<?php echo esc_url($project['url']); ?>"
+                    data-project-item
+                    data-project-type="<?php echo esc_attr($project['type_key']); ?>"
+                    <?php echo $project['type_key'] !== 'hotels' ? ' hidden' : ''; ?>
+                >
+                    <div class="sh-project-gallery-image">
+                        <img
+                            src="<?php echo esc_url($project['image']); ?>"
+                            alt="<?php echo esc_attr($project['alt']); ?>"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                    </div>
+                    <div class="sh-project-gallery-body">
+                        <span class="sh-project-gallery-type"><?php echo esc_html($project['type_label']); ?></span>
+                        <h3><?php echo esc_html($project['title']); ?></h3>
+                        <span class="sh-project-gallery-link">View Project</span>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="sh-project-cta-shell" aria-labelledby="projects-cta-heading">
+        <div class="sh-project-cta">
+            <div>
+                <span class="sh-project-eyebrow">Project Support</span>
+                <h2 id="projects-cta-heading">Planning something that needs the right specification from the start?</h2>
+            </div>
+            <div>
+                <p>Whether your project is residential, hospitality, apartment-led, governmental or specialist in nature, Sanctuary can help guide product choices, coordinate the right solutions and support the process from the early stages.</p>
+                <div class="sh-project-cta-actions">
+                    <a class="sh-project-btn sh-project-btn--solid" href="<?php echo esc_url(home_url('/contact/')); ?>">Visit Showroom</a>
+                    <a class="sh-project-btn sh-project-btn--ghost" href="<?php echo esc_url(home_url('/partners/')); ?>">Explore Partners</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        var cards = Array.prototype.slice.call(document.querySelectorAll('[data-filter-card]'));
+        var items = Array.prototype.slice.call(document.querySelectorAll('[data-project-item]'));
+        var gallery = document.getElementById('project-gallery');
+
+        if (!cards.length || !items.length || !gallery) {
+            return;
+        }
+
+        function setFilter(type) {
+            cards.forEach(function (card) {
+                var active = card.getAttribute('data-filter-card') === type;
+                card.classList.toggle('is-active', active);
+                card.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+
+            items.forEach(function (item) {
+                item.hidden = item.getAttribute('data-project-type') !== type;
+            });
+
+            window.setTimeout(function () {
+                gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+        }
+
+        cards.forEach(function (card) {
+            card.addEventListener('click', function () {
+                setFilter(card.getAttribute('data-filter-card'));
+            });
+        });
+    }());
+</script>
+
+<?php get_footer(); ?>

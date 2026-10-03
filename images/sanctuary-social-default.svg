@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Sanctuary Holdings</title>
+  <desc id="desc">Sanctuary Holdings designer bathware and building solutions in Sri Lanka.</desc>
+  <rect width="1200" height="630" fill="#3f5949"/>
+  <rect x="44" y="44" width="1112" height="542" fill="none" stroke="#bb8964" stroke-width="2"/>
+  <text x="600" y="292" fill="#ffffff" font-family="Baskerville, Georgia, serif" font-size="80" letter-spacing="12" text-anchor="middle">SANCTUARY</text>
+  <text x="600" y="360" fill="#ffffff" font-family="Montserrat, Arial, sans-serif" font-size="34" letter-spacing="14" text-anchor="middle">HOLDINGS</text>
+  <line x1="430" y1="405" x2="770" y2="405" stroke="#bb8964" stroke-width="2"/>
+  <text x="600" y="458" fill="#f7f2ea" font-family="Montserrat, Arial, sans-serif" font-size="19" font-weight="600" letter-spacing="4" text-anchor="middle">DESIGNER BATHWARE · BUILDING SOLUTIONS</text>
+  <text x="600" y="502" fill="#f7f2ea" font-family="Montserrat, Arial, sans-serif" font-size="16" letter-spacing="3" text-anchor="middle">SRI LANKA</text>
+</svg>

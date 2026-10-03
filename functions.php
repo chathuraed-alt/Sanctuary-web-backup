@@ -343,7 +343,95 @@ function sanctuary_filter_document_title( $title ) {
 add_filter( 'pre_get_document_title', 'sanctuary_filter_document_title', 20 );
 
 function sanctuary_get_default_social_image_url() {
-    if ( is_front_page() ) {
+    $image = sanctuary_get_social_image_data();
+
+    return isset( $image['url'] ) ? $image['url'] : '';
+}
+
+function sanctuary_get_social_image_data_from_attachment( $attachment_id ) {
+    $attachment_id = absint( $attachment_id );
+    if ( ! $attachment_id ) {
+        return array();
+    }
+
+    $image = wp_get_attachment_image_src( $attachment_id, 'full' );
+    if ( empty( $image[0] ) ) {
+        return array();
+    }
+
+    $alt = trim( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+    if ( '' === $alt ) {
+        $alt = trim( wp_strip_all_tags( get_the_title( $attachment_id ) ) );
+    }
+
+    return array(
+        'id'     => $attachment_id,
+        'url'    => $image[0],
+        'width'  => isset( $image[1] ) ? (int) $image[1] : 0,
+        'height' => isset( $image[2] ) ? (int) $image[2] : 0,
+        'type'   => get_post_mime_type( $attachment_id ),
+        'alt'    => $alt,
+    );
+}
+
+function sanctuary_get_social_image_data_from_url( $url, $fallback_alt = '' ) {
+    $url = esc_url_raw( $url );
+    if ( '' === $url ) {
+        return array();
+    }
+
+    $attachment_id = attachment_url_to_postid( $url );
+    if ( $attachment_id ) {
+        $image = sanctuary_get_social_image_data_from_attachment( $attachment_id );
+        if ( ! empty( $image ) ) {
+            if ( '' === $image['alt'] ) {
+                $image['alt'] = $fallback_alt;
+            }
+            return $image;
+        }
+    }
+
+    $width  = 0;
+    $height = 0;
+    $type   = '';
+    $uploads = wp_upload_dir();
+    if ( ! empty( $uploads['baseurl'] ) && ! empty( $uploads['basedir'] ) && 0 === strpos( $url, $uploads['baseurl'] ) ) {
+        $file = str_replace( $uploads['baseurl'], $uploads['basedir'], $url );
+        if ( is_readable( $file ) ) {
+            $size = wp_getimagesize( $file );
+            if ( is_array( $size ) ) {
+                $width  = isset( $size[0] ) ? (int) $size[0] : 0;
+                $height = isset( $size[1] ) ? (int) $size[1] : 0;
+                $type   = isset( $size['mime'] ) ? $size['mime'] : '';
+            }
+        }
+    }
+
+    return array(
+        'id'     => 0,
+        'url'    => $url,
+        'width'  => $width,
+        'height' => $height,
+        'type'   => $type,
+        'alt'    => $fallback_alt,
+    );
+}
+
+function sanctuary_get_social_image_data() {
+    static $social_image = null;
+    if ( null !== $social_image ) {
+        return $social_image;
+    }
+
+    $queried_id = get_queried_object_id();
+    $page_title = trim( wp_strip_all_tags( get_the_title( $queried_id ) ) );
+    $default_alt = $page_title ? $page_title . ' | Sanctuary Holdings' : 'Sanctuary Holdings designer bathware and building solutions in Sri Lanka';
+
+    if ( is_singular() && has_post_thumbnail( $queried_id ) ) {
+        $social_image = sanctuary_get_social_image_data_from_attachment( get_post_thumbnail_id( $queried_id ) );
+    }
+
+    if ( empty( $social_image ) && is_front_page() ) {
         $slider_query = new WP_Query(
             array(
                 'post_type'      => 'slider',
@@ -357,25 +445,50 @@ function sanctuary_get_default_social_image_url() {
 
         if ( $slider_query->have_posts() ) {
             $slider_query->the_post();
-            $slider_image = wp_get_attachment_url( get_post_thumbnail_id( get_the_ID() ) );
+            $social_image = sanctuary_get_social_image_data_from_attachment( get_post_thumbnail_id( get_the_ID() ) );
             wp_reset_postdata();
-
-            if ( $slider_image ) {
-                return $slider_image;
-            }
         }
 
         wp_reset_postdata();
     }
 
-    if ( is_singular() && has_post_thumbnail( get_queried_object_id() ) ) {
-        $featured_image = wp_get_attachment_url( get_post_thumbnail_id( get_queried_object_id() ) );
-        if ( $featured_image ) {
-            return $featured_image;
+    if ( empty( $social_image ) && is_singular( 'partners' ) && function_exists( 'get_field' ) ) {
+        $partner_slider = get_field( 'slider', $queried_id );
+        if ( is_array( $partner_slider ) && ! empty( $partner_slider ) ) {
+            $first_image = reset( $partner_slider );
+            $first_id    = is_array( $first_image ) && ! empty( $first_image['ID'] ) ? $first_image['ID'] : $first_image;
+            $social_image = sanctuary_get_social_image_data_from_attachment( $first_id );
         }
     }
 
-    return 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/Sanctuary-logo.jpg';
+    if ( empty( $social_image ) ) {
+        $partner_hub_images = array(
+            '/partners/designer-bathware'    => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/07/seros-victoria-albert.jpg',
+            '/partners/hot-water-solutions'  => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/sanctuary-hot-water.png',
+            '/partners/pumps-fire-curtains'  => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/sanctuary-pumps-fire.png',
+        );
+        $path = sanctuary_get_current_path();
+        if ( isset( $partner_hub_images[ $path ] ) ) {
+            $social_image = sanctuary_get_social_image_data_from_url( $partner_hub_images[ $path ], $default_alt );
+        }
+    }
+
+    if ( empty( $social_image ) ) {
+        $social_image = array(
+            'id'     => 0,
+            'url'    => get_template_directory_uri() . '/images/sanctuary-social-default.png',
+            'width'  => 1200,
+            'height' => 630,
+            'type'   => 'image/png',
+            'alt'    => 'Sanctuary Holdings designer bathware and building solutions in Sri Lanka',
+        );
+    }
+
+    if ( empty( $social_image['alt'] ) ) {
+        $social_image['alt'] = $default_alt;
+    }
+
+    return $social_image;
 }
 
 function sanctuary_filter_wpseo_opengraph_title( $title ) {
@@ -400,11 +513,76 @@ add_filter( 'wpseo_opengraph_desc', 'sanctuary_filter_wpseo_opengraph_desc' );
 add_filter( 'wpseo_twitter_description', 'sanctuary_filter_wpseo_opengraph_desc' );
 
 function sanctuary_filter_wpseo_opengraph_image( $image ) {
-    $social_image = sanctuary_get_default_social_image_url();
-    return ! empty( $social_image ) ? $social_image : $image;
+    $social_image = sanctuary_get_social_image_data();
+    return ! empty( $social_image['url'] ) ? $social_image['url'] : $image;
 }
 add_filter( 'wpseo_opengraph_image', 'sanctuary_filter_wpseo_opengraph_image' );
 add_filter( 'wpseo_twitter_image', 'sanctuary_filter_wpseo_opengraph_image' );
+
+function sanctuary_filter_wpseo_opengraph_image_width( $width ) {
+    $social_image = sanctuary_get_social_image_data();
+    return ! empty( $social_image['width'] ) ? $social_image['width'] : $width;
+}
+add_filter( 'wpseo_opengraph_image_width', 'sanctuary_filter_wpseo_opengraph_image_width' );
+
+function sanctuary_filter_wpseo_opengraph_image_height( $height ) {
+    $social_image = sanctuary_get_social_image_data();
+    return ! empty( $social_image['height'] ) ? $social_image['height'] : $height;
+}
+add_filter( 'wpseo_opengraph_image_height', 'sanctuary_filter_wpseo_opengraph_image_height' );
+
+function sanctuary_filter_wpseo_opengraph_image_type( $type ) {
+    $social_image = sanctuary_get_social_image_data();
+    return ! empty( $social_image['type'] ) ? $social_image['type'] : $type;
+}
+add_filter( 'wpseo_opengraph_image_type', 'sanctuary_filter_wpseo_opengraph_image_type' );
+
+function sanctuary_filter_wpseo_frontend_presentation( $presentation ) {
+    $social_image = sanctuary_get_social_image_data();
+    if ( ! empty( $social_image['url'] ) ) {
+        $presentation->open_graph_images = array(
+            array(
+                'url'    => $social_image['url'],
+                'width'  => $social_image['width'],
+                'height' => $social_image['height'],
+                'type'   => $social_image['type'],
+            ),
+        );
+        $presentation->twitter_card  = 'summary_large_image';
+        $presentation->twitter_image = $social_image['url'];
+    }
+
+    if ( in_array( sanctuary_get_current_path(), array( '/partners/designer-bathware', '/partners/hot-water-solutions', '/partners/pumps-fire-curtains' ), true ) ) {
+        $presentation->open_graph_url         = home_url( trailingslashit( ltrim( sanctuary_get_current_path(), '/' ) ) );
+        $presentation->open_graph_description = sanctuary_get_meta_description();
+        $presentation->open_graph_type        = 'website';
+    }
+
+    return $presentation;
+}
+add_filter( 'wpseo_frontend_presentation', 'sanctuary_filter_wpseo_frontend_presentation', 20 );
+
+if ( class_exists( '\\Yoast\\WP\\SEO\\Presenters\\Abstract_Indexable_Presenter' ) && ! class_exists( 'Sanctuary_WPSEO_Open_Graph_Image_Alt_Presenter' ) ) {
+    class Sanctuary_WPSEO_Open_Graph_Image_Alt_Presenter extends \Yoast\WP\SEO\Presenters\Abstract_Indexable_Presenter {
+        public function get() {
+            $social_image = sanctuary_get_social_image_data();
+            return isset( $social_image['alt'] ) ? $social_image['alt'] : '';
+        }
+
+        public function present() {
+            $alt = $this->get();
+            return '' !== $alt ? '<meta property="og:image:alt" content="' . esc_attr( $alt ) . '" />' : '';
+        }
+    }
+}
+
+function sanctuary_add_wpseo_social_presenters( $presenters ) {
+    if ( class_exists( 'Sanctuary_WPSEO_Open_Graph_Image_Alt_Presenter' ) ) {
+        $presenters[] = new Sanctuary_WPSEO_Open_Graph_Image_Alt_Presenter();
+    }
+    return $presenters;
+}
+add_filter( 'wpseo_frontend_presenters', 'sanctuary_add_wpseo_social_presenters', 20 );
 
 function sanctuary_get_meta_description() {
     $path_meta = sanctuary_get_path_seo_meta();
@@ -536,20 +714,6 @@ function sanctuary_exclude_authors_from_yoast_sitemap() {
     return true;
 }
 add_filter( 'wpseo_sitemap_exclude_author', 'sanctuary_exclude_authors_from_yoast_sitemap', 20 );
-
-function sanctuary_output_social_image_meta() {
-    if ( is_admin() ) {
-        return;
-    }
-
-    $social_image = sanctuary_get_default_social_image_url();
-    if ( empty( $social_image ) ) {
-        return;
-    }
-
-    echo '<meta property="og:image" content="' . esc_url( $social_image ) . '" />' . "\n";
-    echo '<meta property="og:image:alt" content="' . esc_attr( get_bloginfo( 'name' ) ) . '" />' . "\n";
-}
 
 function sanctuary_get_sanctuary_faqs() {
     return array(

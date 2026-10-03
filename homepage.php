@@ -525,7 +525,7 @@ body.home:not(#sh-home-dark-heading-20260908):not(#sh-home-dark-heading-override
                                                 array( 'name' => 'Perrin and Rowe', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/perrin-and-rowe-white.png', 'url' => '/partners/perrin-rowe/' ),
                                                 array( 'name' => 'Victoria and Albert', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/vanda-white.png', 'url' => '/partners/victoria-albert/' ),
                                                 array( 'name' => 'Valvex', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/valvex-white.png', 'url' => '/partners/valvex/' ),
-                                                array( 'name' => 'THG', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/thg-white.png', 'url' => '/partners/thg/' ),
+                                                array( 'name' => 'THG', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/thg-white.png', 'url' => '/partners/thg-paris/' ),
                                                 array( 'name' => 'Delabie', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/delabie-white.png', 'url' => '/partners/delabie/' ),
                                                 array( 'name' => 'ASI', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/asi-white.png', 'url' => '/partners/asi/' ),
                                                 array( 'name' => 'Nulite', 'src' => 'https://sanctuaryholdings.lk/wp-content/uploads/2026/04/nulite-white.png', 'url' => '/partners/nulite/' ),

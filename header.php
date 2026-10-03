@@ -256,6 +256,9 @@
   .sh4-brand-group__heading i{height:1px;flex:1;background:rgba(63,89,73,.17)}
   .sh4-brand-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .sh4-mega__column--left .sh4-brand-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sh4-product-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .sh4-product-links a{display:inline-flex!important;align-items:center;min-height:32px;padding:0 12px!important;border:1px solid rgba(63,89,73,.28);border-radius:999px;color:#3f5949!important;font-family:"montserratbold","Montserrat",sans-serif;font-size:9px!important;letter-spacing:.08em!important;text-decoration:none!important;text-transform:uppercase!important}
+  .sh4-product-links a:hover,.sh4-product-links a:focus-visible{border-color:#3f5949;background:#3f5949;color:#fff!important;outline:0}
   .sh4-brand-row{position:relative;min-width:0;min-height:120px;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:14px 10px 12px!important;border:1px solid #e4ded4;border-radius:11px;background:#fff;color:#26382e!important;box-shadow:0 5px 14px rgba(32,45,36,.045);text-align:center;text-decoration:none!important;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease,background .25s ease}
   .sh4-brand-row:hover,.sh4-brand-row:focus-visible{transform:translateY(-2px);border-color:#3f5949;background:#fff;box-shadow:0 10px 22px rgba(32,45,36,.09);outline:0}
   .sh4-brand-row:focus-visible{box-shadow:0 0 0 2px #f7f2ea,0 0 0 4px #3f5949,0 10px 22px rgba(32,45,36,.09)}
@@ -301,6 +304,8 @@
   .sh4-mobile-brand__copy strong{display:block;color:#2f4336;font-family:"montserratregular","Montserrat",sans-serif;font-size:11px;font-weight:600;line-height:1.25}
   .sh4-mobile-brand__country{display:block;margin-top:4px;color:rgba(47,67,54,.80);font-family:"montserratregular","Montserrat",sans-serif;font-size:10px;font-weight:500;letter-spacing:.025em;line-height:1.25}
   .sh4-mobile-brand__arrow{display:none!important}
+  .sh4-mobile-product-links{display:grid;grid-template-columns:1fr;padding:8px 5px 2px;border-top:1px solid rgba(63,89,73,.14)}
+  .sh4-mobile-product-links a{min-height:42px;display:flex!important;align-items:center;padding:8px 7px!important;color:#3f5949!important;font-family:"montserratbold","Montserrat",sans-serif;font-size:10px!important;letter-spacing:.06em!important;text-decoration:none!important;text-transform:uppercase!important}
 }
 </style>
 <style id="sh5-partner-logo-scale-tuning">
@@ -994,6 +999,11 @@ $sh4_partner_groups = array(
 $sh4_left_groups = array('Designer Bathware','Commercial Washrooms');
 $sh4_middle_groups = array('Hot Water','Fire & Safety','Water Management');
 $sh4_mobile_groups = array_merge($sh4_left_groups, $sh4_middle_groups);
+$sh4_designer_bathware_ranges = array(
+    array('label'=>'Washbasins','path'=>'/washbasins/'),
+    array('label'=>'Bathtubs','path'=>'/bathtubs/'),
+    array('label'=>'Taps & Shower Systems','path'=>'/taps-shower-systems/'),
+);
 $sh4_default = $sh4_partner_groups['Designer Bathware'][3];
 ?>
     <div class="sh4-mega__shell" aria-label="Sanctuary partner brands">
@@ -1024,6 +1034,13 @@ $sh4_default = $sh4_partner_groups['Designer Bathware'][3];
                             </a>
                         <?php endforeach; ?>
                     </div>
+                    <?php if ('Designer Bathware' === $sh4_group_name) : ?>
+                        <nav class="sh4-product-links" aria-label="Designer Bathware product ranges">
+                            <?php foreach ($sh4_designer_bathware_ranges as $sh4_range) : ?>
+                                <a href="<?php echo esc_url(home_url($sh4_range['path'])); ?>"><?php echo esc_html($sh4_range['label']); ?></a>
+                            <?php endforeach; ?>
+                        </nav>
+                    <?php endif; ?>
                 </section>
             <?php endforeach; ?>
         </div>
@@ -1137,6 +1154,13 @@ $sh4_default = $sh4_partner_groups['Designer Bathware'][3];
                         <span class="sh4-mobile-brand__copy"><strong><?php echo esc_html($sh4_brand['name']); ?></strong><span class="sh4-mobile-brand__country"><?php echo esc_html($sh4_brand['country']); ?></span></span>
                     </a>
                 <?php endforeach; ?>
+                <?php if ('Designer Bathware' === $sh4_group_name) : ?>
+                    <nav class="sh4-mobile-product-links" aria-label="Designer Bathware product ranges">
+                        <?php foreach ($sh4_designer_bathware_ranges as $sh4_range) : ?>
+                            <a href="<?php echo esc_url(home_url($sh4_range['path'])); ?>"><?php echo esc_html($sh4_range['label']); ?></a>
+                        <?php endforeach; ?>
+                    </nav>
+                <?php endif; ?>
             </div>
         </details>
     <?php endforeach; ?>

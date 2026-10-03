@@ -489,7 +489,7 @@
                                 <li><a href="https://sanctuaryholdings.lk/about/">About Us</a></li>
                                 <li><a href="https://sanctuaryholdings.lk/partners/">Our Partners</a></li>
                                 <li><a href="https://sanctuaryholdings.lk/contact/">Contact Us</a></li>
-                                <li><a href="https://sanctuaryholdings.lk/newspage/">News</a></li>
+                                <li><a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">News</a></li>
                             </ul>
                         </div>
 

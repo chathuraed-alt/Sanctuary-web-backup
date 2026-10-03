@@ -236,6 +236,14 @@ function sanctuary_get_path_seo_map() {
             'title'       => 'Sanctuary Holdings Projects | Premium Bathware Sri Lanka',
             'description' => 'Explore Sanctuary Holdings projects across luxury residences, hotels, apartments, resorts, and commercial developments in Sri Lanka and the Maldives.',
         ),
+        '/projects/radisson-hotel-kandy' => array(
+            'title'       => 'Radisson Hotel Kandy Project | Sanctuary Holdings',
+            'description' => 'Explore the Radisson Hotel Kandy project by Sanctuary Holdings, featuring premium bathroom fittings and refined project solutions for real spaces.',
+        ),
+        '/projects/uga-ghiri-ella' => array(
+            'title'       => 'Uga Ghiri – Ella Project | Sanctuary Holdings',
+            'description' => 'Explore the Uga Ghiri – Ella project, where Sanctuary Holdings supplied premium bathroom fittings for this new luxury hill-country retreat by Uga Resorts.',
+        ),
         '/about' => array(
             'title'       => 'About Sanctuary Holdings | Premium Bathware Sri Lanka',
             'description' => 'Learn about Sanctuary Holdings, our story, partner brands, project approach, leadership team, and premium bathware and building solutions in Sri Lanka.',
@@ -314,9 +322,37 @@ function sanctuary_get_path_seo_map() {
 function sanctuary_get_path_seo_meta( $path = '' ) {
     $path = $path ? untrailingslashit( $path ) : sanctuary_get_current_path();
     $path = '' === $path ? '/' : $path;
+    $path = preg_replace( '#/page/\d+$#', '', $path );
+    $path = '' === $path ? '/' : $path;
     $map  = sanctuary_get_path_seo_map();
 
     return isset( $map[ $path ] ) ? $map[ $path ] : array();
+}
+
+function sanctuary_normalize_seo_title( $title ) {
+    $title = wp_strip_all_tags( (string) $title );
+    $title = preg_replace( '/[\s\x{00A0}\x{2007}\x{202F}]+/u', ' ', $title );
+
+    return trim( $title );
+}
+
+function sanctuary_normalize_meta_description( $description, $max_length = 160 ) {
+    $description = wp_strip_all_tags( (string) $description );
+    $description = preg_replace( '/[\s\x{00A0}\x{2007}\x{202F}]+/u', ' ', $description );
+    $description = trim( $description );
+
+    $length = function_exists( 'mb_strlen' ) ? mb_strlen( $description ) : strlen( $description );
+    if ( $length <= $max_length ) {
+        return $description;
+    }
+
+    $slice = function_exists( 'mb_substr' ) ? mb_substr( $description, 0, $max_length - 1 ) : substr( $description, 0, $max_length - 1 );
+    $last_space = strrpos( $slice, ' ' );
+    if ( false !== $last_space ) {
+        $slice = substr( $slice, 0, $last_space );
+    }
+
+    return rtrim( $slice, " \t\n\r\0\x0B,;:-." ) . '…';
 }
 
 function sanctuary_get_seo_title() {
@@ -335,12 +371,32 @@ function sanctuary_filter_document_title( $title ) {
 
     $seo_title = sanctuary_get_seo_title();
     if ( ! empty( $seo_title ) ) {
-        return $seo_title;
+        return sanctuary_normalize_seo_title( $seo_title );
     }
 
-    return $title;
+    return sanctuary_normalize_seo_title( $title );
 }
 add_filter( 'pre_get_document_title', 'sanctuary_filter_document_title', 20 );
+
+function sanctuary_get_canonical_url() {
+    if ( is_404() || is_search() ) {
+        return '';
+    }
+
+    $path = sanctuary_get_current_path();
+    if ( '/' === $path ) {
+        return home_url( '/' );
+    }
+
+    return home_url( trailingslashit( ltrim( $path, '/' ) ) );
+}
+
+function sanctuary_filter_wpseo_canonical( $canonical ) {
+    $current_url = sanctuary_get_canonical_url();
+    return '' !== $current_url ? $current_url : $canonical;
+}
+add_filter( 'wpseo_canonical', 'sanctuary_filter_wpseo_canonical', 20 );
+add_filter( 'wpseo_opengraph_url', 'sanctuary_filter_wpseo_canonical', 20 );
 
 function sanctuary_get_default_social_image_url() {
     $image = sanctuary_get_social_image_data();
@@ -493,7 +549,7 @@ function sanctuary_get_social_image_data() {
 
 function sanctuary_filter_wpseo_opengraph_title( $title ) {
     $seo_title = sanctuary_get_seo_title();
-    return ! empty( $seo_title ) ? $seo_title : $title;
+    return sanctuary_normalize_seo_title( ! empty( $seo_title ) ? $seo_title : $title );
 }
 add_filter( 'wpseo_opengraph_title', 'sanctuary_filter_wpseo_opengraph_title' );
 add_filter( 'wpseo_twitter_title', 'sanctuary_filter_wpseo_opengraph_title' );
@@ -502,12 +558,12 @@ function sanctuary_filter_wpseo_opengraph_desc( $description ) {
     if ( is_singular() ) {
         $yoast_meta_description = get_post_meta( get_queried_object_id(), '_yoast_wpseo_metadesc', true );
         if ( ! empty( $yoast_meta_description ) ) {
-            return $yoast_meta_description;
+            return sanctuary_normalize_meta_description( $yoast_meta_description );
         }
     }
 
     $meta_description = sanctuary_get_meta_description();
-    return ! empty( $meta_description ) ? $meta_description : $description;
+    return sanctuary_normalize_meta_description( ! empty( $meta_description ) ? $meta_description : $description );
 }
 add_filter( 'wpseo_opengraph_desc', 'sanctuary_filter_wpseo_opengraph_desc' );
 add_filter( 'wpseo_twitter_description', 'sanctuary_filter_wpseo_opengraph_desc' );
@@ -552,8 +608,18 @@ function sanctuary_filter_wpseo_frontend_presentation( $presentation ) {
         $presentation->twitter_image = $social_image['url'];
     }
 
+    $canonical_url = sanctuary_get_canonical_url();
+    if ( '' !== $canonical_url ) {
+        $presentation->canonical      = $canonical_url;
+        $presentation->open_graph_url = $canonical_url;
+    }
+
+    $presentation->open_graph_title       = sanctuary_normalize_seo_title( $presentation->open_graph_title );
+    $presentation->twitter_title          = sanctuary_normalize_seo_title( $presentation->twitter_title );
+    $presentation->open_graph_description = sanctuary_normalize_meta_description( $presentation->open_graph_description );
+    $presentation->twitter_description    = sanctuary_normalize_meta_description( $presentation->twitter_description );
+
     if ( in_array( sanctuary_get_current_path(), array( '/partners/designer-bathware', '/partners/hot-water-solutions', '/partners/pumps-fire-curtains' ), true ) ) {
-        $presentation->open_graph_url         = home_url( trailingslashit( ltrim( sanctuary_get_current_path(), '/' ) ) );
         $presentation->open_graph_description = sanctuary_get_meta_description();
         $presentation->open_graph_type        = 'website';
     }
@@ -587,17 +653,17 @@ add_filter( 'wpseo_frontend_presenters', 'sanctuary_add_wpseo_social_presenters'
 function sanctuary_get_meta_description() {
     $path_meta = sanctuary_get_path_seo_meta();
     if ( ! empty( $path_meta['description'] ) ) {
-        return $path_meta['description'];
+        return sanctuary_normalize_meta_description( $path_meta['description'] );
     }
 
     if ( is_singular() ) {
         $yoast_meta_description = get_post_meta( get_queried_object_id(), '_yoast_wpseo_metadesc', true );
         if ( ! empty( $yoast_meta_description ) ) {
-            return $yoast_meta_description;
+            return sanctuary_normalize_meta_description( $yoast_meta_description );
         }
     }
 
-    return get_bloginfo( 'description' );
+    return sanctuary_normalize_meta_description( get_bloginfo( 'description' ) );
 }
 
 function sanctuary_output_meta_description() {

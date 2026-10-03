@@ -7,7 +7,7 @@
         <meta content="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" name="copyright"/>
         <?php
         /* sh2_seo_description_repair */
-        $sh2_title = wp_strip_all_tags( get_the_title() );
+        $sh2_title = function_exists( 'sanctuary_normalize_seo_title' ) ? sanctuary_normalize_seo_title( get_the_title() ) : wp_strip_all_tags( get_the_title() );
         $sh2_slug = get_post_field( 'post_name', get_queried_object_id() );
         if ( empty( $sh2_slug ) ) {
             $sh2_request_path = trim( (string) wp_parse_url( home_url( add_query_arg( array() ) ), PHP_URL_PATH ), '/' );
@@ -45,8 +45,11 @@
             );
 
         $sh2_post_type = get_post_type();
+        $sh2_path_meta = function_exists( 'sanctuary_get_path_seo_meta' ) ? sanctuary_get_path_seo_meta() : array();
         $sh2_saved_meta_description = (string) get_post_meta( get_queried_object_id(), '_yoast_wpseo_metadesc', true );
-        if ( '' !== trim( $sh2_saved_meta_description ) ) {
+        if ( ! empty( $sh2_path_meta['description'] ) ) {
+            $sh2_meta_description = $sh2_path_meta['description'];
+        } elseif ( '' !== trim( $sh2_saved_meta_description ) ) {
             $sh2_meta_description = $sh2_saved_meta_description;
         } elseif ( isset( $sh2_page_descriptions[ $sh2_slug ] ) ) {
             $sh2_meta_description = $sh2_page_descriptions[ $sh2_slug ];
@@ -60,13 +63,8 @@
             $sh2_meta_description = sprintf( 'Explore %s from Sanctuary Holdings, with premium bathware, hot water, plumbing, pumps, fire-safety and project solutions in Sri Lanka.', $sh2_title );
         }
 
-        if ( strlen( $sh2_meta_description ) > 160 ) {
-            $sh2_meta_description = substr( $sh2_meta_description, 0, 157 );
-            $sh2_last_space = strrpos( $sh2_meta_description, ' ' );
-            if ( false !== $sh2_last_space ) {
-                $sh2_meta_description = substr( $sh2_meta_description, 0, $sh2_last_space );
-            }
-            $sh2_meta_description = rtrim( $sh2_meta_description, ' ,;:-' ) . '.';
+        if ( function_exists( 'sanctuary_normalize_meta_description' ) ) {
+            $sh2_meta_description = sanctuary_normalize_meta_description( $sh2_meta_description );
         }
         echo '<meta name="description" content="' . esc_attr( $sh2_meta_description ) . '" />' . "\n";
         add_filter( 'wpseo_metadesc', '__return_false', 999 );
